@@ -2,8 +2,9 @@
 class convert {
 	
 	public static function stringToHex ($s) {
-		$r = "0x";
-		$hexes = array ("0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f");
+		// $r = "0x";
+		$r = "";
+		$hexes = array ("0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F");
 		for ($i=0; $i<strlen($s); $i++) {$r .= ($hexes [(ord($s{$i}) >> 4)] . $hexes [(ord($s{$i}) & 0xf)]);}
 		return $r;
 	}

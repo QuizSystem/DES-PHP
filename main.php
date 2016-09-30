@@ -2,8 +2,36 @@
 include 'destable.php';
 include 'convert.php';
 
+//-------Test
+$tm = " Nguyễn Văn Thieu Mao is here!";
+$hex_tm = convert::stringToHex($tm);
+echo $hex_tm . "<br>";
+$tm2 = convert::hexToString($hex_tm);
+echo $tm2 . "<br>";
+echo "<br>";
+
 //-------Start Sinh khoa
-$key = "123457799BBCDFF1";
+function convertKeyToHex($input){
+	$hex = convert::stringToHex($input);
+	$hex = "1234567890ABCD";
+	$len = strlen($hex);
+	echo $len;
+	if ($len >= 16) {
+		$hex = substr($hex, 0, 16);
+	} else {
+		$soKyTuThem = 16 - $len;
+		$padding = "";
+		for ($i=0; $i<$soKyTuThem; $i++){
+			$padding = $padding . "0";
+		}
+		$hex = $hex . $padding;
+	}
+	return $hex;
+}
+$key_string = "mao";
+$key_hex = convertKeyToHex($key_string); 
+$key = $key_hex; "123457799BBCDFF2";
+echo $key_hex . "---- <br>";
 $key_bin = convert::hexToBin($key);
 $key_pc1 = convert::hoanVi($key_bin, destable::$pc1);
 $catkey = convert::cat2($key_pc1);
@@ -29,6 +57,7 @@ for ($i=1; $i<=16; $i++){
 	echo "<br>";
 	echo "K" . $i . ": " . $K_hex[$i];
 }
+echo "<br>";
 
 
 //-------Start MA HOA
@@ -78,53 +107,101 @@ function hamF($R, $K){
 	return $f;
 }
 
-$x = "0123456789ABCDEF";
-$x_bin = convert::hexToBin($x);
-$x_ip = convert::hoanVi($x_bin, destable::$ip);
-$catx = convert::cat2($x_ip);
-$L[0] = $catx[0];
-$R[0] = $catx[1];
-for ($i=1; $i<=16; $i++){
-	$L[$i] = $R[$i-1];
-	$F = hamF($R[$i-1], $K[$i]);
-	$R[$i] = convert::phepXOR($L[$i-1], $F);
+function catNho($input){
+	$lenInput = strlen($input);
+	$soKyTuThem = 16 - $lenInput % 16;
+	if ($soKyTuThem > 0 && $soKyTuThem < 16){
+		$padding = "";
+		for ($i=0; $i<$soKyTuThem; $i++){
+			$padding = $padding . "0";
+		}
+		$input_padding = $input . $padding;
+	} else {
+		$input_padding = $input;
+	}
+	$soKhoi = strlen($input_padding) / 16;
+	$output = array();
+	for ($i=0; $i<$soKhoi; $i++){
+		$khoi = substr($input_padding, $i*16, 16);
+		array_push($output, $khoi);
+		// echo "khoi " . $khoi . "<br>";
+	}
+	// echo "input_padding: " . $input_padding . "<br>";
+	// echo "so khoi = " . $soKhoi;
+	return $output;
 }
-$R16L16 = $R[16].$L[16];
-$y = convert::hoanVi($R16L16, destable::$ip_1);
-$y_hex = convert::binToHex($y);
-//-------End MA HOA
 
+$chuoi_can_ma_hoa = "Chuỗi cần mã hóa ở đây";
+$hex_chuoi_can_ma_hoa = convert::stringToHex($chuoi_can_ma_hoa);
+echo $hex_chuoi_can_ma_hoa . "<br>";
+$cacKhoi = catNho($hex_chuoi_can_ma_hoa);
+$soKhoi = count($cacKhoi);
 echo "<br><br><br>";
 echo "QUA TRINH MA HOA";
-echo "<br>";
-echo "Ban ro: " . $x;
-echo "<br>";
-echo $x_bin;
-echo "<br>";
-echo $x_ip;
-echo "<br>";
-echo $y;
-echo "<br>";
-echo "Ban ma: " . $y_hex;
+$banMa = "";
+for ($j=0; $j<$soKhoi; $j++){
+	echo "<br>>>>>> Khoi " . ($j+1) . " : " . $cacKhoi[$j];
+	$x = $cacKhoi[$j];//"AABA39284B27C849";
+	$x_bin = convert::hexToBin($x);
+	$x_ip = convert::hoanVi($x_bin, destable::$ip);
+	$catx = convert::cat2($x_ip);
+	$L[0] = $catx[0];
+	$R[0] = $catx[1];
+	for ($i=1; $i<=16; $i++){
+		$L[$i] = $R[$i-1];
+		$F = hamF($R[$i-1], $K[$i]);
+		$R[$i] = convert::phepXOR($L[$i-1], $F);
+	}
+	$R16L16 = $R[16].$L[16];
+	$y = convert::hoanVi($R16L16, destable::$ip_1);
+	$y_hex = convert::binToHex($y);
+	echo "<br>Ban ro: " . $x;
+	// echo "<br>";
+	// echo $x_bin;
+	// echo "<br>";
+	// echo $x_ip;
+	// echo "<br>";
+	// echo $y;
+	// echo "<br>";
+	echo "<br>Ban ma: " . $y_hex;
+	$banMa = $banMa . $y_hex;
+}
+echo "<br> Ban ma tong: " . $banMa;
+
+//echo "So khoi sau tinh: " . count($cacKhoi);
+
+//-------End MA HOA
 
 //-------Start GIAI MA (tuong tu ma hoa chi dao nguoc lai khoa tu K16->K1)
-$x2 = "85E813540F0AB405";
-$x_bin = convert::hexToBin($x2);
-$x_ip = convert::hoanVi($x_bin, destable::$ip);
-$catx = convert::cat2($x_ip);
-$L[0] = $catx[0];
-$R[0] = $catx[1];
-for ($i=1; $i<=16; $i++){
-	$L[$i] = $R[$i-1];
-	$F = hamF($R[$i-1], $K[17-$i]);
-	$R[$i] = convert::phepXOR($L[$i-1], $F);
-}
-$R16L16 = $R[16].$L[16];
-$y = convert::hoanVi($R16L16, destable::$ip_1);
-$y_hex = convert::binToHex($y);
-//-------End GiA MA
 echo "<br><br><br>";
 echo "QUA TRINH GIAI MA";
-echo "<br>Giai ma: ".$y_hex;
+$cacKhoiMaHoa = catNho($banMa);
+$soKhoiBanMa = count($cacKhoiMaHoa);
+$banRoHex = "";
+for ($j=0; $j<$soKhoiBanMa; $j++){
+	echo "<br>>>>>> Khoi ban ma " . ($j+1) . " : " . $cacKhoiMaHoa[$j];
+	$x2 = $cacKhoiMaHoa[$j]; //$y_hex;//"29A68BA8BE7C3D4A";
+	$x_bin = convert::hexToBin($x2);
+	$x_ip = convert::hoanVi($x_bin, destable::$ip);
+	$catx = convert::cat2($x_ip);
+	$L[0] = $catx[0];
+	$R[0] = $catx[1];
+	for ($i=1; $i<=16; $i++){
+		$L[$i] = $R[$i-1];
+		$F = hamF($R[$i-1], $K[17-$i]);
+		$R[$i] = convert::phepXOR($L[$i-1], $F);
+	}
+	$R16L16 = $R[16].$L[16];
+	$y = convert::hoanVi($R16L16, destable::$ip_1);
+	$y_hex = convert::binToHex($y);
+	echo "<br>Giai ma: ".$y_hex;
+	$banRoHex = $banRoHex . $y_hex;
+}
+$banRo = convert::hexToString($banRoHex);
+echo "<br>Ban ro: " . $banRo;
+
+//-------End GiA MA
+
+
 
 ?>
